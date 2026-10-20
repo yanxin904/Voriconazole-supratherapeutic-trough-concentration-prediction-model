@@ -7,9 +7,17 @@ import shap
 import matplotlib.pyplot as plt
 
 # Load the model
-model_path=r'D:\常德市一\科研课题\伏立康唑高血药浓度\数据\所有数据分析\模型评估\9个变量\XGB_Final_Model.pkl'
-saved_model=joblib.load(model_path)
-model=saved_model["model"]
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+model_path = BASE_DIR / "XGB_Final_Model.pkl"
+
+if not model_path.is_file():
+    st.error(f"Model file not found: {model_path}")
+    st.stop()
+
+saved_model = joblib.load(model_path)
+model = saved_model["model"]
 
 # 如果有分类变量，需要定义特征选项
 #Quinolone_options = {
