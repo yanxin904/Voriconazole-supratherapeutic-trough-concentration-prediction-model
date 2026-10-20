@@ -44,32 +44,44 @@ if st.button("Predict"):
     # Predict class and probabilities
     threshold = 0.439  # 设置新的阈值
     predicted_proba = model.predict_proba(features)[0]  # # 获取第一个样本的预测概率（这是一个概率数组）
-    predicted_class = 1 if predicted_proba[1] >= threshold else 0  #根据类别 1 的概率是否大于阈值调整类别
 
-    # Display prediction results
-    st.write(f"**Predicted Class:** {predicted_class}")
-    st.write(f"**Prediction Probabilities:** {predicted_proba}")
+    # 自动识别类别1（High=1）对应的概率位置
+    classes = np.asarray(model.classes_)
+    positive_indices = np.where(classes == 1)[0]
 
-    # Generate advice based on prediction results
-    probability = predicted_proba[predicted_class] * 100
+    if len(positive_indices) != 1:
+        st.error(f"无法识别High=1对应的概率列，模型类别为：{classes}")
+        st.stop()
+
+    positive_idx = positive_indices[0]
+    # 始终取High=1，即血药浓度>5 mg/L的预测概率
+    probability = float(predicted_proba[positive_idx])
+    # 根据固定阈值0.439进行分类
+    predicted_class = int(probability >= threshold)
+    # 显示结果
+    risk_label = "High risk" if predicted_class == 1 else "Low risk"
+    st.write(f"**Predicted risk classification:** {risk_label} (Class {predicted_class})")
+    st.write(
+        f"**Probability of voriconazole trough concentration >5 mg/L:** "
+        f"{probability * 100:.1f}%")
 
     if predicted_class == 1:
         advice = (
-            f"According to our model, this patient has a high risk of voriconazole trough concentration >5 mg/L. "
-            f"The model predicts that the probability of voriconazole trough concentration exceeding 5 mg/L is {probability:.1f}%. "
-            f"While this is just an estimate, it suggests that this patient maybe at increased risk of supratherapeutic voriconazole exposure. "
-            f"We recommend prioritizing TDM to assess the patient's actual voriconazole trough concentration"
-            f"while reviewing the current dosing regimen, liver function, and potential drug-drug interactions.  "
-            f"It is also essential to monitor for potential adverse effects, particularly hepatic and neuropsychiatric events, "
-            f"and to consider individualized dose adjustment based on measured drug concentrations and the patient's clinical status.  "
+            f"According to our model, this patient is at an elevated predicted risk of having a voriconazole trough concentration exceeding 5 mg/L. "
+            f"The predicted probability is {probability * 100:.1f}%. "
+            f"This estimate reflects the model's prediction and does not confirm that the patient's actual voriconazole concentration is elevated. "
+            f"We recommend prioritizing TDM to assess the patient's actual voriconazole trough concentration."
+            f"The dosing regimen, liver function, concomitant medications, and potential drug–drug interactions should also be reviewed. "
+            f"Voriconazole-related adverse effects, particularly hepatotoxicity and neurological or visual disturbances, should be monitored. "
+            f"Any dose adjustment should be individualized according to the measured drug concentration, clinical response, tolerability, and overall clinical status. "
         )
     else:
         advice = (
-            f"According to our model, this patient has a low risk of voriconazole trough concentration >5 mg/L. "
-            f"The model predicts that the probability of voriconazole trough concentration exceeding 5 mg/L is  {probability:.1f}%. "
-            f"While this is just an estimate, it suggests that this patient does not rule out the possibility of supratherapeutic voriconazole exposure."
-            f"We recommend continuing to assess the need for TDM according to the patient's clinical status, treatment phase, liver function, and potential drug-drug interactions. "
-            f"Treatment decisions should be made in combination with the measured drug concentration and the patient's overall clinical condition."
+            f"According to our model, this patient is at a low predicted risk of having a voriconazole trough concentration exceeding 5 mg/L"
+            f"The predicted probability is {probability * 100:.1f}%. "
+            f"Although the predicted risk is low, this result does not exclude the possibility of supratherapeutic voriconazole exposure."
+            f"The need for TDM should continue to be assessed according to the patient's clinical status, treatment phase, liver function, and potential drug-drug interactions."
+            f"Treatment decisions should be guided by measured voriconazole concentrations, when available, together with the patient's clinical response, tolerability, and overall clinical condition."
         )
 
     st.write(advice)
@@ -88,4 +100,4 @@ if st.button("Predict"):
 
 #确保在命令行中运行 Streamlit 应用程序，使用以下命令：
 #按 Win + R 打开运行对话框，输入 cmd 并按回车，打开命令提示符。
-# 在python的终端 输入命令：streamlit run "D:\project\Streamlit_app.py"
+# 在python的终端 输入命令：streamlit run "D:\project\伏立康唑高血药浓度\Streamlit-伏立康唑.py"
